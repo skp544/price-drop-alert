@@ -1,0 +1,156 @@
+import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import {
+  Trash2, RefreshCw, ExternalLink, TrendingDown, TrendingUp, Minus, AlertCircle,
+} from 'lucide-react';
+import { deleteProduct, checkNow } from '../api';
+import toast from 'react-hot-toast';
+
+const fmt = (n) =>
+  n != null
+    ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
+    : '—';
+
+const PriceTrend = ({ current, prev }) => {
+  if (!current || !prev || current === prev) return <Minus size={14} className="text-gray-400" />;
+  if (current < prev) return <TrendingDown size={14} className="text-green-500" />;
+  return <TrendingUp size={14} className="text-red-400" />;
+};
+
+export default function ProductCard({ product, onRefresh }) {
+  const [deleting, setDeleting] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const isBelow = product.currentPrice != null && product.currentPrice <= product.targetPrice;
+  const pctDiff =
+    product.currentPrice && product.targetPrice
+      ? (((product.currentPrice - product.targetPrice) / product.targetPrice) * 100).toFixed(1)
+      : null;
+
+  const handleDelete = async (e) => {
+    e.preventDefault();
+    if (!confirm('Stop tracking this product?')) return;
+    setDeleting(true);
+    try {
+      await deleteProduct(product._id);
+      toast.success('Product removed');
+      onRefresh();
+    } catch (err) {
+      toast.error(err.message);
+      setDeleting(false);
+    }
+  };
+
+  const handleCheckNow = async (e) => {
+    e.preventDefault();
+    setChecking(true);
+    try {
+      const res = await checkNow(product._id);
+      toast.success(`Price updated: ${fmt(res.data?.currentPrice)}`);
+      onRefresh();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  return (
+    <div className={`card transition-all duration-200 hover:shadow-md ${isBelow ? 'ring-2 ring-green-400' : ''}`}>
+      <Link to={`/products/${product._id}`} className="block">
+        {/* Image + platform badge */}
+        <div className="relative bg-gray-50 h-40 flex items-center justify-center overflow-hidden border-b border-gray-100">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+              className="h-full w-full object-contain p-3"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          ) : (
+            <div className="text-gray-300 text-4xl">🛍️</div>
+          )}
+          <span className={`absolute top-2 left-2 ${product.platform === 'amazon' ? 'badge-amazon' : 'badge-flipkart'}`}>
+            {product.platform === 'amazon' ? '🟠 Amazon' : '🔵 Flipkart'}
+          </span>
+          {isBelow && (
+            <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+              TARGET HIT!
+            </span>
+          )}
+          {product.scrapeError && (
+            <span className="absolute bottom-2 right-2 text-amber-500" title={product.scrapeError}>
+              <AlertCircle size={16} />
+            </span>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug mb-3">
+            {product.title}
+          </h3>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="bg-gray-50 rounded-lg p-2 text-center">
+              <p className="text-xs text-gray-400 mb-0.5">Current</p>
+              <p className={`text-base font-bold ${isBelow ? 'text-green-600' : 'text-gray-900'}`}>
+                {fmt(product.currentPrice)}
+              </p>
+            </div>
+            <div className="bg-brand-50 rounded-lg p-2 text-center">
+              <p className="text-xs text-gray-400 mb-0.5">Target</p>
+              <p className="text-base font-bold text-brand-600">{fmt(product.targetPrice)}</p>
+            </div>
+          </div>
+
+          {pctDiff !== null && (
+            <div className={`text-xs text-center py-1 rounded-md font-medium ${
+              isBelow
+                ? 'bg-green-50 text-green-700'
+                : 'bg-amber-50 text-amber-700'
+            }`}>
+              {isBelow ? `${Math.abs(pctDiff)}% below target` : `${pctDiff}% above target`}
+            </div>
+          )}
+
+          {product.lastCheckedAt && (
+            <p className="text-xs text-gray-400 mt-2 text-center">
+              Checked {new Date(product.lastCheckedAt).toLocaleString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
+        </div>
+      </Link>
+
+      {/* Actions */}
+      <div className="px-4 pb-4 flex gap-2">
+        <button
+          onClick={handleCheckNow}
+          disabled={checking}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors disabled:opacity-50"
+        >
+          <RefreshCw size={13} className={checking ? 'animate-spin' : ''} />
+          {checking ? 'Checking...' : 'Check Now'}
+        </button>
+        <a
+          href={product.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="p-2 text-gray-400 hover:text-brand-500 hover:bg-gray-50 rounded-lg transition-colors"
+          title="Open product"
+        >
+          <ExternalLink size={15} />
+        </a>
+        <button
+          onClick={handleDelete}
+          disabled={deleting}
+          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+          title="Remove from tracking"
+        >
+          <Trash2 size={15} />
+        </button>
+      </div>
+    </div>
+  );
+}
