@@ -1,4 +1,26 @@
-node_modules
+# Environment — NEVER commit real credentials
 .env
-logs
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Logs
+backend/logs/
+*.log
+
+# Build output
+frontend/dist/
+frontend/.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
 nginx.conf
