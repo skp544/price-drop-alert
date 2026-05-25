@@ -114,7 +114,7 @@ export default function AddProductModal({ userEmail, onClose, onAdded }) {
 
           <div className="bg-brand-50 rounded-lg p-3 text-xs text-brand-700">
             <strong>Notification email:</strong> {userEmail}<br />
-            Price is checked every hour automatically. You can also check manually.
+            Brand and category are detected automatically from the product title.
           </div>
 
           {error && (

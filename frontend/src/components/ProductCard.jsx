@@ -6,6 +6,11 @@ import {
 import { deleteProduct, checkNow } from '../api';
 import toast from 'react-hot-toast';
 
+const CATEGORY_ICON = {
+  phone: '📱', tablet: '📟', laptop: '💻', desktop: '🖥️', tv: '📺',
+  audio: '🎧', camera: '📷', wearable: '⌚', gaming: '🎮', accessories: '🔌', other: '📦',
+};
+
 const fmt = (n) =>
   n != null
     ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
@@ -87,9 +92,23 @@ export default function ProductCard({ product, onRefresh }) {
 
         {/* Content */}
         <div className="p-4">
-          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug mb-3">
+          <h3 className="text-sm font-semibold text-gray-800 line-clamp-2 leading-snug mb-2">
             {product.title}
           </h3>
+          {(product.category || product.brand) && (
+            <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
+              {product.category && product.category !== 'other' && (
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 text-xs">
+                  {CATEGORY_ICON[product.category] ?? '📦'} {product.category}
+                </span>
+              )}
+              {product.brand && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-brand-50 text-brand-600 text-xs font-medium">
+                  {product.brand}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-gray-50 rounded-lg p-2 text-center">

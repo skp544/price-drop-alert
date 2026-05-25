@@ -47,6 +47,16 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    category: {
+      type: String,
+      enum: ['phone', 'tablet', 'laptop', 'desktop', 'tv', 'audio', 'camera', 'wearable', 'gaming', 'accessories', 'other'],
+      default: 'other',
+    },
+    brand: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     scrapeError: {
       type: String,
       default: null,

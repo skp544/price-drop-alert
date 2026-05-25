@@ -61,4 +61,64 @@ const USER_AGENTS = [
 const getRandomUserAgent = () =>
   USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
-module.exports = { parsePrice, detectPlatform, sleep, withRetry, getRandomUserAgent };
+/**
+ * Common brands ordered from most specific to least, so longer/rarer names
+ * are matched before short ambiguous ones (e.g. "Fire-Boltt" before "Bolt").
+ */
+const BRANDS = [
+  'Fire-Boltt', 'Nothing', 'iQOO', 'OnePlus', 'Realme', 'Oppo', 'Vivo',
+  'Xiaomi', 'Redmi', 'Poco', 'Samsung', 'Apple', 'Google', 'Motorola',
+  'Nokia', 'Huawei', 'Honor',
+  'HP', 'Dell', 'Lenovo', 'Asus', 'Acer', 'MSI', 'Microsoft', 'Razer',
+  'boAt', 'JBL', 'Bose', 'Sennheiser', 'Jabra', 'Skullcandy', 'Noise',
+  'Beats', 'Harman',
+  'Canon', 'Nikon', 'Fujifilm', 'GoPro', 'Sony',
+  'LG', 'TCL', 'Hisense', 'Vu', 'Philips',
+  'Corsair', 'SteelSeries', 'Logitech',
+  'Fitbit', 'Garmin', 'Amazfit',
+];
+
+/**
+ * Extract a known brand name from a product title.
+ * Returns the matched brand (original casing) or an empty string.
+ */
+const detectBrand = (title) => {
+  if (!title) return '';
+  for (const brand of BRANDS) {
+    const escaped = brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`\\b${escaped}\\b`, 'i').test(title)) return brand;
+  }
+  return '';
+};
+
+/**
+ * Maps keyword phrases to categories. Checked in declaration order so more
+ * specific phrases (e.g. "gaming laptop") win over broader ones ("laptop").
+ */
+const CATEGORY_RULES = [
+  { category: 'gaming',      keywords: ['gaming laptop', 'gaming phone', 'gaming headset', 'graphics card', 'gpu ', 'gamepad', 'joystick', 'playstation', 'xbox', 'nintendo', 'gaming keyboard', 'gaming mouse', 'gaming monitor'] },
+  { category: 'phone',       keywords: ['smartphone', 'mobile phone', 'iphone', '5g phone', '4g phone', 'android phone'] },
+  { category: 'tablet',      keywords: ['tablet', 'ipad', ' tab '] },
+  { category: 'laptop',      keywords: ['laptop', 'notebook', 'macbook', 'chromebook'] },
+  { category: 'desktop',     keywords: ['desktop', 'all-in-one', 'imac', ' pc '] },
+  { category: 'tv',          keywords: ['smart tv', 'television', 'qled', 'oled tv', 'led tv', ' tv,', ' tv '] },
+  { category: 'audio',       keywords: ['headphone', 'earphone', 'earbuds', 'neckband', 'airpods', 'soundbar', 'bluetooth speaker', 'wireless speaker', 'in-ear', 'over-ear'] },
+  { category: 'camera',      keywords: ['camera', 'dslr', 'mirrorless', 'action cam'] },
+  { category: 'wearable',    keywords: ['smartwatch', 'smart watch', 'fitness band', 'fitness tracker', 'activity tracker'] },
+  { category: 'accessories', keywords: ['phone case', 'screen protector', 'power bank', 'fast charger', 'usb cable', 'type-c cable', 'wireless charger', 'back cover'] },
+];
+
+/**
+ * Infer a product category from its title.
+ * Returns one of the Product category enum values, defaulting to 'other'.
+ */
+const detectCategory = (title) => {
+  if (!title) return 'other';
+  const lower = title.toLowerCase();
+  for (const { category, keywords } of CATEGORY_RULES) {
+    if (keywords.some((kw) => lower.includes(kw))) return category;
+  }
+  return 'other';
+};
+
+module.exports = { parsePrice, detectPlatform, sleep, withRetry, getRandomUserAgent, detectBrand, detectCategory };

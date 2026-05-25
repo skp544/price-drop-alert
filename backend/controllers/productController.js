@@ -4,7 +4,7 @@ const PriceHistory = require('../models/PriceHistory');
 const User = require('../models/User');
 const { scrapeProduct } = require('../services/scraperService');
 const { checkProductPrice } = require('../services/priceService');
-const { detectPlatform } = require('../utils/helpers');
+const { detectPlatform, detectBrand, detectCategory } = require('../utils/helpers');
 const logger = require('../utils/logger');
 
 /**
@@ -57,14 +57,17 @@ const addProduct = async (req, res, next) => {
       logger.warn(`Initial scrape failed for ${url}: ${scrapeErr.message}`);
     }
 
+    const resolvedTitle = scraped.title || 'Unknown Product';
     const product = await Product.create({
       userId: user._id,
       url,
       platform,
-      title: scraped.title || 'Unknown Product',
+      title: resolvedTitle,
       imageUrl: scraped.imageUrl || '',
       currentPrice: scraped.price,
       targetPrice: parseFloat(targetPrice),
+      category: detectCategory(resolvedTitle),
+      brand: detectBrand(resolvedTitle),
       lastCheckedAt: scraped.price ? new Date() : null,
       scrapeError: scraped.price ? null : 'Initial scrape failed',
     });
