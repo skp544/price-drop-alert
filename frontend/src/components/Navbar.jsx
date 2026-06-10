@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Bell, LogOut, TrendingDown } from 'lucide-react';
+import { LogOut, TrendingDown } from 'lucide-react';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar({ userEmail, onLogout }) {
   return (
@@ -16,9 +17,9 @@ export default function Navbar({ userEmail, onLogout }) {
           </Link>
 
           {userEmail && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
+              <NotificationBell userEmail={userEmail} />
               <div className="hidden sm:flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
-                <Bell size={14} className="text-brand-500" />
                 <span className="text-sm text-gray-600 font-medium">{userEmail}</span>
               </div>
               <button

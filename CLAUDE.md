@@ -80,12 +80,22 @@ When adding support for new platforms, implement a new scraper function in `scra
 | PUT | `/api/products/:id/target` | Update target price |
 | POST | `/api/products/:id/check` | Manual price check |
 | DELETE | `/api/products/:id` | Soft-delete product |
+| GET | `/api/notifications?email=&limit=` | List recent notifications + unread count |
+| PUT | `/api/notifications/read-all` | Mark all of a user's notifications as read |
+| PUT | `/api/notifications/:id/read` | Mark a single notification as read |
 | GET | `/health` | Health check |
 
 ## Models
 
 - **User**: `email` (unique), `name`, `isActive`
-- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `targetPrice`, `lastNotifiedPrice`, `lastCheckedAt`, `isActive`, `scrapeError`
+- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `lastCheckedAt`, `isActive`, `scrapeError`
 - **PriceHistory**: `productId`, `price`, `timestamp` — compound index on `(productId, timestamp DESC)`
+- **Notification**: `userId`, `productId`, `productTitle`, `type` (price_drop|price_increase), `oldPrice`, `newPrice`, `isRead` — compound index on `(userId, createdAt DESC)`
 
 `lastNotifiedPrice` on Product is critical — it tracks the lowest price for which an alert was sent, preventing repeated emails if price stays at the same dropped value.
+
+## In-App Notifications
+
+Every price check (`priceService.checkProductPrice()`) compares `newPrice` to the product's prior `currentPrice`. If they differ, a `Notification` document is created with `type: 'price_drop'` or `'price_increase'` — independent of the email alert logic, so increases are surfaced too even though they never trigger emails. `category` and `brand` on Product are auto-detected from the scraped title via `detectCategory()`/`detectBrand()` in `utils/helpers.js`; users don't set them manually.
+
+The frontend `NotificationBell` component polls `/api/notifications` every 60s and renders a dropdown with unread badges; clicking a notification marks it read and links to `/products/:id`.

@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const PriceHistory = require('../models/PriceHistory');
+const Notification = require('../models/Notification');
 const User = require('../models/User');
 const { scrapeProduct } = require('./scraperService');
 const { sendPriceDropEmail } = require('./emailService');
@@ -29,6 +30,7 @@ const checkProductPrice = async (product) => {
     // Update product with latest data
     const updateData = {
       currentPrice: newPrice,
+      previousPrice: product.currentPrice,
       lastCheckedAt: new Date(),
       scrapeError: null,
     };
@@ -46,6 +48,18 @@ const checkProductPrice = async (product) => {
 
     result.oldPrice = product.currentPrice;
     result.newPrice = newPrice;
+
+    // Create an in-app notification whenever the price has changed
+    if (product.currentPrice != null && newPrice !== product.currentPrice) {
+      await Notification.create({
+        userId: product.userId,
+        productId: product._id,
+        productTitle: scraped.title || product.title,
+        type: newPrice < product.currentPrice ? 'price_drop' : 'price_increase',
+        oldPrice: product.currentPrice,
+        newPrice,
+      });
+    }
 
     // Check if price drop alert should fire
     const shouldNotify =

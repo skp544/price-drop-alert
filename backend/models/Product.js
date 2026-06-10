@@ -30,6 +30,10 @@ const productSchema = new mongoose.Schema(
       type: Number,
       default: null,
     },
+    previousPrice: {
+      type: Number,
+      default: null,
+    },
     targetPrice: {
       type: Number,
       required: [true, 'Target price is required'],

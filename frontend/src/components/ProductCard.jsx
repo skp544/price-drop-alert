@@ -19,7 +19,7 @@ const fmt = (n) =>
 const PriceTrend = ({ current, prev }) => {
   if (!current || !prev || current === prev) return <Minus size={14} className="text-gray-400" />;
   if (current < prev) return <TrendingDown size={14} className="text-green-500" />;
-  return <TrendingUp size={14} className="text-red-400" />;
+  return <TrendingUp size={14} className="text-red-500" />;
 };
 
 export default function ProductCard({ product, onRefresh }) {
@@ -113,8 +113,9 @@ export default function ProductCard({ product, onRefresh }) {
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-gray-50 rounded-lg p-2 text-center">
               <p className="text-xs text-gray-400 mb-0.5">Current</p>
-              <p className={`text-base font-bold ${isBelow ? 'text-green-600' : 'text-gray-900'}`}>
+              <p className={`text-base font-bold flex items-center justify-center gap-1 ${isBelow ? 'text-green-600' : 'text-gray-900'}`}>
                 {fmt(product.currentPrice)}
+                <PriceTrend current={product.currentPrice} prev={product.previousPrice} />
               </p>
             </div>
             <div className="bg-brand-50 rounded-lg p-2 text-center">

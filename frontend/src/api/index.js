@@ -32,3 +32,9 @@ export const updateTargetPrice = (id, targetPrice) =>
   api.put(`/products/${id}/target`, { targetPrice });
 export const deleteProduct = (id) => api.delete(`/products/${id}`);
 export const checkNow = (id) => api.post(`/products/${id}/check`);
+
+// Notifications
+export const getNotifications = (email, limit = 20) =>
+  api.get(`/notifications?email=${encodeURIComponent(email)}&limit=${limit}`);
+export const markNotificationRead = (id) => api.put(`/notifications/${id}/read`);
+export const markAllNotificationsRead = (email) => api.put('/notifications/read-all', { email });
