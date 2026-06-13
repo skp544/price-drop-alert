@@ -30,6 +30,7 @@ export const getPriceHistory = (id, limit = 50) =>
   api.get(`/products/${id}/history?limit=${limit}`);
 export const updateTargetPrice = (id, targetPrice) =>
   api.put(`/products/${id}/target`, { targetPrice });
+export const toggleWishlist = (id) => api.put(`/products/${id}/wishlist`);
 export const deleteProduct = (id) => api.delete(`/products/${id}`);
 export const checkNow = (id) => api.post(`/products/${id}/check`);
 

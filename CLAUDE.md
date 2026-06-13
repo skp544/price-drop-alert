@@ -78,6 +78,7 @@ When adding support for new platforms, implement a new scraper function in `scra
 | GET | `/api/products/:id` | Product + last 100 price history |
 | GET | `/api/products/:id/history?limit=` | Price history |
 | PUT | `/api/products/:id/target` | Update target price |
+| PUT | `/api/products/:id/wishlist` | Toggle wishlist status |
 | POST | `/api/products/:id/check` | Manual price check |
 | DELETE | `/api/products/:id` | Soft-delete product |
 | GET | `/api/notifications?email=&limit=` | List recent notifications + unread count |
@@ -88,7 +89,7 @@ When adding support for new platforms, implement a new scraper function in `scra
 ## Models
 
 - **User**: `email` (unique), `name`, `isActive`
-- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `lastCheckedAt`, `isActive`, `scrapeError`
+- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `isWishlisted`, `lastCheckedAt`, `isActive`, `scrapeError`
 - **PriceHistory**: `productId`, `price`, `timestamp` — compound index on `(productId, timestamp DESC)`
 - **Notification**: `userId`, `productId`, `productTitle`, `type` (price_drop|price_increase), `oldPrice`, `newPrice`, `isRead` — compound index on `(userId, createdAt DESC)`
 

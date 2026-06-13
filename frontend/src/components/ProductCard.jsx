@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import {
-  Trash2, RefreshCw, ExternalLink, TrendingDown, TrendingUp, Minus, AlertCircle,
+  Trash2, RefreshCw, ExternalLink, TrendingDown, TrendingUp, Minus, AlertCircle, Heart,
 } from 'lucide-react';
-import { deleteProduct, checkNow } from '../api';
+import { deleteProduct, checkNow, toggleWishlist } from '../api';
 import toast from 'react-hot-toast';
 
 const CATEGORY_ICON = {
@@ -25,6 +25,7 @@ const PriceTrend = ({ current, prev }) => {
 export default function ProductCard({ product, onRefresh }) {
   const [deleting, setDeleting] = useState(false);
   const [checking, setChecking] = useState(false);
+  const [wishlisting, setWishlisting] = useState(false);
 
   const isBelow = product.currentPrice != null && product.currentPrice <= product.targetPrice;
   const pctDiff =
@@ -43,6 +44,21 @@ export default function ProductCard({ product, onRefresh }) {
     } catch (err) {
       toast.error(err.message);
       setDeleting(false);
+    }
+  };
+
+  const handleToggleWishlist = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setWishlisting(true);
+    try {
+      const res = await toggleWishlist(product._id);
+      toast.success(res.data?.isWishlisted ? 'Added to wishlist' : 'Removed from wishlist');
+      onRefresh();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setWishlisting(false);
     }
   };
 
@@ -78,8 +94,20 @@ export default function ProductCard({ product, onRefresh }) {
           <span className={`absolute top-2 left-2 ${product.platform === 'amazon' ? 'badge-amazon' : 'badge-flipkart'}`}>
             {product.platform === 'amazon' ? '🟠 Amazon' : '🔵 Flipkart'}
           </span>
+          <button
+            onClick={handleToggleWishlist}
+            disabled={wishlisting}
+            className={`absolute top-2 right-2 p-1.5 rounded-full transition-colors disabled:opacity-50 ${
+              product.isWishlisted
+                ? 'bg-pink-500 text-white'
+                : 'bg-white/80 text-gray-400 hover:text-pink-500'
+            }`}
+            title={product.isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart size={14} fill={product.isWishlisted ? 'currentColor' : 'none'} />
+          </button>
           {isBelow && (
-            <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
+            <span className="absolute top-10 right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
               TARGET HIT!
             </span>
           )}

@@ -5,6 +5,7 @@ const {
   getProducts,
   getProductById,
   updateTargetPrice,
+  toggleWishlist,
   deleteProduct,
   checkNow,
   getPriceHistory,
@@ -28,6 +29,7 @@ router.get('/', getProducts);
 router.get('/:id', getProductById);
 router.get('/:id/history', getPriceHistory);
 router.put('/:id/target', updateTargetPrice);
+router.put('/:id/wishlist', toggleWishlist);
 router.post('/:id/check', checkNow);
 router.delete('/:id', deleteProduct);
 

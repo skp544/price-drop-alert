@@ -61,6 +61,10 @@ const productSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    isWishlisted: {
+      type: Boolean,
+      default: false,
+    },
     scrapeError: {
       type: String,
       default: null,

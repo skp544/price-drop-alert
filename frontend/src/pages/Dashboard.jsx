@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Package, TrendingDown, Bell, AlertCircle, RefreshCw, X } from 'lucide-react';
+import { Plus, Package, TrendingDown, Bell, AlertCircle, RefreshCw, X, Heart } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import AddProductModal from '../components/AddProductModal';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -51,6 +51,7 @@ export default function Dashboard({ userEmail }) {
     if (filters.platform === 'below' && !(p.currentPrice != null && p.currentPrice <= p.targetPrice)) return false;
     if (filters.platform === 'amazon' && p.platform !== 'amazon') return false;
     if (filters.platform === 'flipkart' && p.platform !== 'flipkart') return false;
+    if (filters.platform === 'wishlist' && !p.isWishlisted) return false;
     if (filters.category && p.category !== filters.category) return false;
     if (filters.brand && p.brand?.toLowerCase() !== filters.brand.toLowerCase()) return false;
     return true;
@@ -61,6 +62,7 @@ export default function Dashboard({ userEmail }) {
     below: products.filter((p) => p.currentPrice != null && p.currentPrice <= p.targetPrice).length,
     amazon: products.filter((p) => p.platform === 'amazon').length,
     flipkart: products.filter((p) => p.platform === 'flipkart').length,
+    wishlist: products.filter((p) => p.isWishlisted).length,
   };
 
   const availableCategories = [...new Set(products.map((p) => p.category).filter(Boolean))];
@@ -85,6 +87,7 @@ export default function Dashboard({ userEmail }) {
     : filters.platform === 'below' ? 'Target Price Hit'
     : filters.platform === 'amazon' ? 'Amazon Products'
     : filters.platform === 'flipkart' ? 'Flipkart Products'
+    : filters.platform === 'wishlist' ? 'Wishlist'
     : 'Tracked Products';
 
   if (loading) return <LoadingSpinner text="Loading your products..." />;
@@ -93,10 +96,11 @@ export default function Dashboard({ userEmail }) {
     <div>
       {/* Stats / platform filter row */}
       {products.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
           {[
             { label: 'Tracking', value: stats.total,    icon: <Package size={16} />,            color: 'text-gray-600 bg-gray-100',   key: 'all' },
             { label: 'Target Hit', value: stats.below,  icon: <TrendingDown size={16} />,       color: 'text-green-600 bg-green-100', key: 'below' },
+            { label: 'Wishlist', value: stats.wishlist, icon: <Heart size={16} />,              color: 'text-pink-600 bg-pink-100',   key: 'wishlist' },
             { label: 'Amazon',   value: stats.amazon,   icon: <span className="text-xs">🟠</span>, color: 'text-orange-600 bg-orange-100', key: 'amazon' },
             { label: 'Flipkart', value: stats.flipkart, icon: <span className="text-xs">🔵</span>, color: 'text-blue-600 bg-blue-100',    key: 'flipkart' },
           ].map((s) => (

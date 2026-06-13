@@ -159,6 +159,26 @@ const updateTargetPrice = async (req, res, next) => {
 };
 
 /**
+ * PUT /api/products/:id/wishlist
+ * Toggle wishlist status for a product.
+ */
+const toggleWishlist = async (req, res, next) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product || !product.isActive) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    product.isWishlisted = !product.isWishlisted;
+    await product.save();
+
+    res.json({ success: true, data: product });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
  * DELETE /api/products/:id
  * Soft-delete (stop tracking) a product.
  */
@@ -223,6 +243,7 @@ module.exports = {
   getProducts,
   getProductById,
   updateTargetPrice,
+  toggleWishlist,
   deleteProduct,
   checkNow,
   getPriceHistory,
