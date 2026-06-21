@@ -89,7 +89,7 @@ When adding support for new platforms, implement a new scraper function in `scra
 ## Models
 
 - **User**: `email` (unique), `name`, `isActive`
-- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `isWishlisted`, `lastCheckedAt`, `isActive`, `scrapeError`
+- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `isWishlisted`, `inStock`, `lastCheckedAt`, `isActive`, `scrapeError`
 - **PriceHistory**: `productId`, `price`, `timestamp` — compound index on `(productId, timestamp DESC)`
 - **Notification**: `userId`, `productId`, `productTitle`, `type` (price_drop|price_increase), `oldPrice`, `newPrice`, `isRead` — compound index on `(userId, createdAt DESC)`
 
@@ -100,3 +100,9 @@ When adding support for new platforms, implement a new scraper function in `scra
 Every price check (`priceService.checkProductPrice()`) compares `newPrice` to the product's prior `currentPrice`. If they differ, a `Notification` document is created with `type: 'price_drop'` or `'price_increase'` — independent of the email alert logic, so increases are surfaced too even though they never trigger emails. `category` and `brand` on Product are auto-detected from the scraped title via `detectCategory()`/`detectBrand()` in `utils/helpers.js`; users don't set them manually.
 
 The frontend `NotificationBell` component polls `/api/notifications` every 60s and renders a dropdown with unread badges; clicking a notification marks it read and links to `/products/:id`.
+
+## Out-of-Stock Handling
+
+Amazon/Flipkart remove the price element entirely when a listing goes out of stock — `scraperService.js` detects this explicitly (e.g. Amazon's `#outOfStock`/"Currently unavailable", Flipkart's "NOTIFY ME" button or "Sold Out" text) and returns `inStock: false` instead of throwing, so `withRetry()` doesn't waste retries on a confirmed unavailable listing.
+- Confirmed out-of-stock → `priceService.checkProductPrice()` clears `currentPrice` to `null` and sets `inStock: false`, so the UI shows "Price not available" / an "Out of Stock" badge instead of a stale price.
+- Generic scrape failure (selector change, blocking, timeout — `inStock` not `false`) → the last known `currentPrice` is kept and `scrapeError` is set instead, since the product may still actually be available.

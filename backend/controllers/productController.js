@@ -50,7 +50,7 @@ const addProduct = async (req, res, next) => {
     }
 
     // Scrape initial price
-    let scraped = { title: 'Fetching...', price: null, imageUrl: '' };
+    let scraped = { title: 'Fetching...', price: null, imageUrl: '', inStock: true };
     try {
       scraped = await scrapeProduct(url, platform);
     } catch (scrapeErr) {
@@ -68,8 +68,9 @@ const addProduct = async (req, res, next) => {
       targetPrice: parseFloat(targetPrice),
       category: detectCategory(resolvedTitle),
       brand: detectBrand(resolvedTitle),
+      inStock: scraped.inStock !== false,
       lastCheckedAt: scraped.price ? new Date() : null,
-      scrapeError: scraped.price ? null : 'Initial scrape failed',
+      scrapeError: scraped.price || scraped.inStock === false ? null : 'Initial scrape failed',
     });
 
     // Record initial price in history

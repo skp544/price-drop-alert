@@ -19,11 +19,24 @@ const checkProductPrice = async (product) => {
     const newPrice = scraped.price;
 
     if (!newPrice) {
-      await Product.findByIdAndUpdate(product._id, {
-        scrapeError: 'Could not extract price',
-        lastCheckedAt: new Date(),
-      });
-      result.status = 'scrape_error';
+      const outOfStock = scraped.inStock === false;
+      const update = { lastCheckedAt: new Date() };
+
+      if (outOfStock) {
+        // Confirmed unavailable on the retailer's page — clear the stale price
+        // instead of continuing to show a price that no longer exists there.
+        update.previousPrice = product.currentPrice;
+        update.currentPrice = null;
+        update.inStock = false;
+        update.scrapeError = null;
+      } else {
+        // Transient scrape failure (selector change, blocking, timeout) — keep
+        // the last known price rather than wiping it out on a guess.
+        update.scrapeError = 'Could not extract price';
+      }
+
+      await Product.findByIdAndUpdate(product._id, update);
+      result.status = outOfStock ? 'out_of_stock' : 'scrape_error';
       return result;
     }
 
@@ -31,6 +44,7 @@ const checkProductPrice = async (product) => {
     const updateData = {
       currentPrice: newPrice,
       previousPrice: product.currentPrice,
+      inStock: true,
       lastCheckedAt: new Date(),
       scrapeError: null,
     };

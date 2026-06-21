@@ -27,6 +27,7 @@ export default function ProductCard({ product, onRefresh }) {
   const [checking, setChecking] = useState(false);
   const [wishlisting, setWishlisting] = useState(false);
 
+  const isOutOfStock = product.inStock === false || product.currentPrice == null;
   const isBelow = product.currentPrice != null && product.currentPrice <= product.targetPrice;
   const pctDiff =
     product.currentPrice && product.targetPrice
@@ -85,7 +86,7 @@ export default function ProductCard({ product, onRefresh }) {
             <img
               src={product.imageUrl}
               alt={product.title}
-              className="h-full w-full object-contain p-3"
+              className={`h-full w-full object-contain p-3 ${isOutOfStock ? 'opacity-40 grayscale' : ''}`}
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           ) : (
@@ -109,6 +110,11 @@ export default function ProductCard({ product, onRefresh }) {
           {isBelow && (
             <span className="absolute top-10 right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full animate-pulse">
               TARGET HIT!
+            </span>
+          )}
+          {isOutOfStock && (
+            <span className="absolute bottom-2 left-2 bg-gray-800/80 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+              Out of Stock
             </span>
           )}
           {product.scrapeError && (
@@ -141,10 +147,14 @@ export default function ProductCard({ product, onRefresh }) {
           <div className="grid grid-cols-2 gap-2 mb-3">
             <div className="bg-gray-50 rounded-lg p-2 text-center">
               <p className="text-xs text-gray-400 mb-0.5">Current</p>
-              <p className={`text-base font-bold flex items-center justify-center gap-1 ${isBelow ? 'text-green-600' : 'text-gray-900'}`}>
-                {fmt(product.currentPrice)}
-                <PriceTrend current={product.currentPrice} prev={product.previousPrice} />
-              </p>
+              {product.currentPrice == null ? (
+                <p className="text-xs font-semibold text-gray-400 italic">Not available</p>
+              ) : (
+                <p className={`text-base font-bold flex items-center justify-center gap-1 ${isBelow ? 'text-green-600' : 'text-gray-900'}`}>
+                  {fmt(product.currentPrice)}
+                  <PriceTrend current={product.currentPrice} prev={product.previousPrice} />
+                </p>
+              )}
             </div>
             <div className="bg-brand-50 rounded-lg p-2 text-center">
               <p className="text-xs text-gray-400 mb-0.5">Target</p>

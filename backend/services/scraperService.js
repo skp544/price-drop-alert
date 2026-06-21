@@ -82,13 +82,22 @@ const scrapeAmazon = async (page, url) => {
     // Fallback: og meta
     const ogTitle = document.querySelector('meta[property="og:title"]')?.content;
 
-    return { title: title || ogTitle || document.title?.split(':')[0]?.trim(), priceText, imageUrl };
+    // Out-of-stock: Amazon removes the price and shows an explicit availability message
+    const availabilityText = document.querySelector('#availability')?.textContent?.trim().toLowerCase() || '';
+    const outOfStock =
+      !priceText &&
+      (document.querySelector('#outOfStock') !== null ||
+        availabilityText.includes('currently unavailable') ||
+        availabilityText.includes('out of stock'));
+
+    return { title: title || ogTitle || document.title?.split(':')[0]?.trim(), priceText, imageUrl, outOfStock };
   }, AMAZON_PRICE_SELECTORS);
 
   return {
     title: data.title || 'Unknown Product',
     price: parsePrice(data.priceText),
     imageUrl: data.imageUrl || '',
+    inStock: !data.outOfStock,
   };
 };
 
@@ -200,13 +209,24 @@ const scrapeFlipkart = async (page, url) => {
       document.querySelector('div._3kidJX img') ||
       document.querySelector('img[class*="product"]');
 
-    return { title, priceText, imageUrl: imgEl?.src ?? null };
+    // Out-of-stock: Flipkart drops the price and swaps the buy button for "NOTIFY ME"
+    // or shows a "Sold Out" / "currently unavailable" message instead.
+    const buyButtonText = (document.querySelector('button._2KpZ6l._2U9uOA')?.textContent || '').toLowerCase();
+    const bodyText = document.body.innerText.toLowerCase();
+    const outOfStock =
+      !priceText &&
+      (buyButtonText.includes('notify me') ||
+        bodyText.includes('sold out') ||
+        bodyText.includes('currently unavailable'));
+
+    return { title, priceText, imageUrl: imgEl?.src ?? null, outOfStock };
   }, FLIPKART_TITLE_SELECTORS);
 
   return {
     title: data.title || 'Unknown Product',
     price: parsePrice(data.priceText),
     imageUrl: data.imageUrl || '',
+    inStock: !data.outOfStock,
   };
 };
 
@@ -228,9 +248,9 @@ const scrapeProduct = async (url, platform) => {
         throw new Error(`Unsupported platform: ${platform}`);
       }
 
-      logger.debug(`Scraped ${platform}: title="${result.title}" price=${result.price}`);
+      logger.debug(`Scraped ${platform}: title="${result.title}" price=${result.price} inStock=${result.inStock}`);
 
-      if (!result.price) {
+      if (!result.price && result.inStock !== false) {
         throw new Error(`Could not extract price from ${platform} page`);
       }
 
