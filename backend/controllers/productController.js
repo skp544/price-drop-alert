@@ -24,7 +24,7 @@ const addProduct = async (req, res, next) => {
     if (!platform) {
       return res.status(400).json({
         success: false,
-        message: 'URL must be from Amazon (amazon.in) or Flipkart (flipkart.com)',
+        message: 'URL must be from Amazon (amazon.in), Flipkart (flipkart.com), or Vijay Sales (vijaysales.com)',
       });
     }
 

@@ -15,7 +15,7 @@ const productSchema = new mongoose.Schema(
     },
     platform: {
       type: String,
-      enum: ['amazon', 'flipkart'],
+      enum: ['amazon', 'flipkart', 'vijaysales'],
       required: true,
     },
     title: {

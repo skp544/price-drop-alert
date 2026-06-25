@@ -11,6 +11,12 @@ const CATEGORY_ICON = {
   audio: '🎧', camera: '📷', wearable: '⌚', gaming: '🎮', accessories: '🔌', other: '📦',
 };
 
+const PLATFORM_BADGE = {
+  amazon: { className: 'badge-amazon', label: '🟠 Amazon' },
+  flipkart: { className: 'badge-flipkart', label: '🔵 Flipkart' },
+  vijaysales: { className: 'badge-vijaysales', label: '🔴 Vijay Sales' },
+};
+
 const fmt = (n) =>
   n != null
     ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
@@ -92,8 +98,8 @@ export default function ProductCard({ product, onRefresh }) {
           ) : (
             <div className="text-gray-300 text-4xl">🛍️</div>
           )}
-          <span className={`absolute top-2 left-2 ${product.platform === 'amazon' ? 'badge-amazon' : 'badge-flipkart'}`}>
-            {product.platform === 'amazon' ? '🟠 Amazon' : '🔵 Flipkart'}
+          <span className={`absolute top-2 left-2 ${PLATFORM_BADGE[product.platform]?.className}`}>
+            {PLATFORM_BADGE[product.platform]?.label}
           </span>
           <button
             onClick={handleToggleWishlist}

@@ -51,6 +51,7 @@ export default function Dashboard({ userEmail }) {
     if (filters.platform === 'below' && !(p.currentPrice != null && p.currentPrice <= p.targetPrice)) return false;
     if (filters.platform === 'amazon' && p.platform !== 'amazon') return false;
     if (filters.platform === 'flipkart' && p.platform !== 'flipkart') return false;
+    if (filters.platform === 'vijaysales' && p.platform !== 'vijaysales') return false;
     if (filters.platform === 'wishlist' && !p.isWishlisted) return false;
     if (filters.category && p.category !== filters.category) return false;
     if (filters.brand && p.brand?.toLowerCase() !== filters.brand.toLowerCase()) return false;
@@ -62,6 +63,7 @@ export default function Dashboard({ userEmail }) {
     below: products.filter((p) => p.currentPrice != null && p.currentPrice <= p.targetPrice).length,
     amazon: products.filter((p) => p.platform === 'amazon').length,
     flipkart: products.filter((p) => p.platform === 'flipkart').length,
+    vijaysales: products.filter((p) => p.platform === 'vijaysales').length,
     wishlist: products.filter((p) => p.isWishlisted).length,
   };
 
@@ -87,6 +89,7 @@ export default function Dashboard({ userEmail }) {
     : filters.platform === 'below' ? 'Target Price Hit'
     : filters.platform === 'amazon' ? 'Amazon Products'
     : filters.platform === 'flipkart' ? 'Flipkart Products'
+    : filters.platform === 'vijaysales' ? 'Vijay Sales Products'
     : filters.platform === 'wishlist' ? 'Wishlist'
     : 'Tracked Products';
 
@@ -96,13 +99,14 @@ export default function Dashboard({ userEmail }) {
     <div>
       {/* Stats / platform filter row */}
       {products.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
           {[
             { label: 'Tracking', value: stats.total,    icon: <Package size={16} />,            color: 'text-gray-600 bg-gray-100',   key: 'all' },
             { label: 'Target Hit', value: stats.below,  icon: <TrendingDown size={16} />,       color: 'text-green-600 bg-green-100', key: 'below' },
             { label: 'Wishlist', value: stats.wishlist, icon: <Heart size={16} />,              color: 'text-pink-600 bg-pink-100',   key: 'wishlist' },
             { label: 'Amazon',   value: stats.amazon,   icon: <span className="text-xs">🟠</span>, color: 'text-orange-600 bg-orange-100', key: 'amazon' },
             { label: 'Flipkart', value: stats.flipkart, icon: <span className="text-xs">🔵</span>, color: 'text-blue-600 bg-blue-100',    key: 'flipkart' },
+            { label: 'Vijay Sales', value: stats.vijaysales, icon: <span className="text-xs">🔴</span>, color: 'text-red-600 bg-red-100', key: 'vijaysales' },
           ].map((s) => (
             <button
               key={s.key}
@@ -270,7 +274,7 @@ function EmptyState({ hasFilters, onClear, onAdd }) {
       </div>
       <h3 className="text-lg font-semibold text-gray-800 mb-1">No products yet</h3>
       <p className="text-gray-400 text-sm mb-5 max-w-xs mx-auto">
-        Add an Amazon or Flipkart product URL and set your target price to start tracking.
+        Add an Amazon, Flipkart, or Vijay Sales product URL and set your target price to start tracking.
       </p>
       <button onClick={onAdd} className="btn-primary inline-flex items-center gap-2">
         <Plus size={16} /> Add Your First Product

@@ -14,6 +14,12 @@ const fmt = (n) =>
     ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n)
     : '—';
 
+const PLATFORM_BADGE = {
+  amazon: { className: 'badge-amazon', label: '🟠 Amazon' },
+  flipkart: { className: 'badge-flipkart', label: '🔵 Flipkart' },
+  vijaysales: { className: 'badge-vijaysales', label: '🔴 Vijay Sales' },
+};
+
 export default function ProductDetail({ userEmail }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -109,8 +115,8 @@ export default function ProductDetail({ userEmail }) {
           )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-2">
-              <span className={product.platform === 'amazon' ? 'badge-amazon' : 'badge-flipkart'}>
-                {product.platform === 'amazon' ? '🟠 Amazon' : '🔵 Flipkart'}
+              <span className={PLATFORM_BADGE[product.platform]?.className}>
+                {PLATFORM_BADGE[product.platform]?.label}
               </span>
               {isBelow && (
                 <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">
@@ -237,7 +243,7 @@ export default function ProductDetail({ userEmail }) {
           </h3>
           <div className="space-y-2 text-sm">
             {[
-              { label: 'Platform', value: product.platform === 'amazon' ? '🟠 Amazon' : '🔵 Flipkart' },
+              { label: 'Platform', value: PLATFORM_BADGE[product.platform]?.label },
               { label: 'Status', value: product.isActive ? '✅ Active' : '⏸ Paused' },
               { label: 'Last Checked', value: product.lastCheckedAt ? new Date(product.lastCheckedAt).toLocaleString('en-IN') : 'Not yet' },
               { label: 'Added On', value: new Date(product.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' }) },

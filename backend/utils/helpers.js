@@ -10,13 +10,14 @@ const parsePrice = (priceStr) => {
 };
 
 /**
- * Detect whether a URL belongs to Amazon or Flipkart.
+ * Detect whether a URL belongs to Amazon, Flipkart, or Vijay Sales.
  */
 const detectPlatform = (url) => {
   try {
     const { hostname } = new URL(url);
     if (hostname.includes('amazon')) return 'amazon';
     if (hostname.includes('flipkart')) return 'flipkart';
+    if (hostname.includes('vijaysales')) return 'vijaysales';
     return null;
   } catch {
     return null;

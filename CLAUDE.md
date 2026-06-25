@@ -1,4 +1,5 @@
 claude --resume "price-drop-alert"
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -6,12 +7,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Single command (runs backend + frontend together)
+
 ```bash
 npm run dev
 ```
+
 Requires `concurrently` — installed via `npm install` at the repo root. Backend on `:5000`, frontend on `:5173`.
 
 ### First-time setup
+
 ```bash
 npm install                  # Install concurrently (root)
 npm run install:all          # Install backend + frontend deps
@@ -19,6 +23,7 @@ cp backend/.env.example backend/.env   # Then fill in .env values
 ```
 
 ### Individual apps
+
 ```bash
 npm run dev --prefix backend    # Backend only (nodemon)
 npm run dev --prefix frontend   # Frontend only (Vite)
@@ -26,6 +31,7 @@ npm run build --prefix frontend # Production build
 ```
 
 ### Docker (full stack including MongoDB)
+
 ```bash
 docker-compose up --build    # Start all services
 docker-compose down          # Stop all services
@@ -60,36 +66,38 @@ Backend requires a `.env` file in `backend/` — copy from `backend/.env.example
 ## Scraper Notes
 
 The scraper (`backend/services/scraperService.js`) uses `puppeteer-extra` with the stealth plugin to avoid bot detection. Key behaviors:
+
 - Blocks fonts and media resources to speed up page loads
 - Rotates user-agents from a pool in `utils/helpers.js`
 - Uses multiple CSS selector fallbacks for price extraction (Amazon and Flipkart both change their DOM frequently)
+- Vijay Sales is scraped differently: it parses the page's `script[type="application/ld+json"]` schema.org `Product` block for `name`/`offers.price`/`offers.availability` first, falling back to `.product__price--price[data-final-price]` DOM scraping only if structured data is missing
 - Retries up to 3 times with exponential backoff via `withRetry()` in `utils/helpers.js`
 
 When adding support for new platforms, implement a new scraper function in `scraperService.js` and update `detectPlatform()` in `utils/helpers.js`.
 
 ## API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/users` | Upsert user by email |
-| GET | `/api/users/:email` | Get user |
-| POST | `/api/products` | Add product (scrapes immediately) |
-| GET | `/api/products?email=` | List user's active products |
-| GET | `/api/products/:id` | Product + last 100 price history |
-| GET | `/api/products/:id/history?limit=` | Price history |
-| PUT | `/api/products/:id/target` | Update target price |
-| PUT | `/api/products/:id/wishlist` | Toggle wishlist status |
-| POST | `/api/products/:id/check` | Manual price check |
-| DELETE | `/api/products/:id` | Soft-delete product |
-| GET | `/api/notifications?email=&limit=` | List recent notifications + unread count |
-| PUT | `/api/notifications/read-all` | Mark all of a user's notifications as read |
-| PUT | `/api/notifications/:id/read` | Mark a single notification as read |
-| GET | `/health` | Health check |
+| Method | Path                               | Description                                |
+| ------ | ---------------------------------- | ------------------------------------------ |
+| POST   | `/api/users`                       | Upsert user by email                       |
+| GET    | `/api/users/:email`                | Get user                                   |
+| POST   | `/api/products`                    | Add product (scrapes immediately)          |
+| GET    | `/api/products?email=`             | List user's active products                |
+| GET    | `/api/products/:id`                | Product + last 100 price history           |
+| GET    | `/api/products/:id/history?limit=` | Price history                              |
+| PUT    | `/api/products/:id/target`         | Update target price                        |
+| PUT    | `/api/products/:id/wishlist`       | Toggle wishlist status                     |
+| POST   | `/api/products/:id/check`          | Manual price check                         |
+| DELETE | `/api/products/:id`                | Soft-delete product                        |
+| GET    | `/api/notifications?email=&limit=` | List recent notifications + unread count   |
+| PUT    | `/api/notifications/read-all`      | Mark all of a user's notifications as read |
+| PUT    | `/api/notifications/:id/read`      | Mark a single notification as read         |
+| GET    | `/health`                          | Health check                               |
 
 ## Models
 
 - **User**: `email` (unique), `name`, `isActive`
-- **Product**: `userId`, `url`, `platform` (amazon|flipkart), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `isWishlisted`, `inStock`, `lastCheckedAt`, `isActive`, `scrapeError`
+- **Product**: `userId`, `url`, `platform` (amazon|flipkart|vijaysales), `title`, `imageUrl`, `currentPrice`, `previousPrice`, `targetPrice`, `lastNotifiedPrice`, `category`, `brand`, `isWishlisted`, `inStock`, `lastCheckedAt`, `isActive`, `scrapeError`
 - **PriceHistory**: `productId`, `price`, `timestamp` — compound index on `(productId, timestamp DESC)`
 - **Notification**: `userId`, `productId`, `productTitle`, `type` (price_drop|price_increase), `oldPrice`, `newPrice`, `isRead` — compound index on `(userId, createdAt DESC)`
 
@@ -103,6 +111,7 @@ The frontend `NotificationBell` component polls `/api/notifications` every 60s a
 
 ## Out-of-Stock Handling
 
-Amazon/Flipkart remove the price element entirely when a listing goes out of stock — `scraperService.js` detects this explicitly (e.g. Amazon's `#outOfStock`/"Currently unavailable", Flipkart's "NOTIFY ME" button or "Sold Out" text) and returns `inStock: false` instead of throwing, so `withRetry()` doesn't waste retries on a confirmed unavailable listing.
+Amazon/Flipkart remove the price element entirely when a listing goes out of stock — `scraperService.js` detects this explicitly (e.g. Amazon's `#outOfStock`/"Currently unavailable", Flipkart's "NOTIFY ME" button or "Sold Out" text, Vijay Sales' JSON-LD `offers.availability` or visible "Notify Me" CTA) and returns `inStock: false` instead of throwing, so `withRetry()` doesn't waste retries on a confirmed unavailable listing.
+
 - Confirmed out-of-stock → `priceService.checkProductPrice()` clears `currentPrice` to `null` and sets `inStock: false`, so the UI shows "Price not available" / an "Out of Stock" badge instead of a stale price.
 - Generic scrape failure (selector change, blocking, timeout — `inStock` not `false`) → the last known `currentPrice` is kept and `scrapeError` is set instead, since the product may still actually be available.

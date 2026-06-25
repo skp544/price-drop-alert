@@ -230,6 +230,75 @@ const scrapeFlipkart = async (page, url) => {
   };
 };
 
+// ─── Vijay Sales ───────────────────────────────────────────────────────────────
+
+const scrapeVijaySales = async (page, url) => {
+  await page.goto(url, { waitUntil: 'networkidle2', timeout: TIMEOUT });
+  await sleep(1500);
+
+  const data = await page.evaluate(() => {
+    // Vijay Sales (an AEM site) embeds clean schema.org Product JSON-LD —
+    // prefer it over DOM classes, which this site rotates frequently.
+    let title = null;
+    let priceText = null;
+    let availability = null;
+
+    for (const script of document.querySelectorAll('script[type="application/ld+json"]')) {
+      let parsed;
+      try {
+        parsed = JSON.parse(script.textContent);
+      } catch {
+        continue;
+      }
+      const entries = Array.isArray(parsed) ? parsed : [parsed];
+      const productEntry = entries.find((e) => e && e['@type'] === 'Product');
+      if (productEntry) {
+        title = productEntry.name || null;
+        const offers = productEntry.offers || {};
+        const price = offers.price || offers.lowPrice;
+        priceText = price ? `₹${price}` : null;
+        availability = offers.availability || null;
+        break;
+      }
+    }
+
+    // DOM fallback if structured data is missing or stale
+    if (!priceText) {
+      const priceEl = document.querySelector(
+        '.product__price--price[data-final-price]:not([data-final-price="null"])'
+      );
+      if (priceEl) {
+        priceText = priceEl.getAttribute('data-final-price') || priceEl.textContent.trim();
+      }
+    }
+    if (!title) {
+      title =
+        document.querySelector('meta[property="og:title"]')?.content ||
+        document.title?.split('|')[0]?.trim() ||
+        null;
+    }
+
+    const imgEl = document.querySelector('.carousel__currentImage') || document.querySelector('#gfg-img');
+
+    // Out-of-stock: JSON-LD marks availability explicitly, and the "Notify Me"
+    // CTA loses its d-none class when the listing is unavailable.
+    const notifyBtn = document.querySelector('#notify-btn, .product__price--notify');
+    const notifyVisible = !!notifyBtn && !notifyBtn.classList.contains('d-none');
+    const outOfStock =
+      !priceText &&
+      ((availability && availability.toLowerCase().includes('outofstock')) || notifyVisible);
+
+    return { title, priceText, imageUrl: imgEl?.src ?? null, outOfStock };
+  });
+
+  return {
+    title: data.title || 'Unknown Product',
+    price: parsePrice(data.priceText),
+    imageUrl: data.imageUrl || '',
+    inStock: !data.outOfStock,
+  };
+};
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 const scrapeProduct = async (url, platform) => {
@@ -244,6 +313,8 @@ const scrapeProduct = async (url, platform) => {
         result = await scrapeAmazon(page, url);
       } else if (platform === 'flipkart') {
         result = await scrapeFlipkart(page, url);
+      } else if (platform === 'vijaysales') {
+        result = await scrapeVijaySales(page, url);
       } else {
         throw new Error(`Unsupported platform: ${platform}`);
       }

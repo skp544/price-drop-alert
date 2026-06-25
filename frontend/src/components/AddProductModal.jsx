@@ -3,6 +3,12 @@ import { X, Link2, IndianRupee, Loader2 } from 'lucide-react';
 import { addProduct } from '../api';
 import toast from 'react-hot-toast';
 
+const PLATFORM_BADGE = {
+  amazon: { className: 'badge-amazon', label: '🟠 Amazon' },
+  flipkart: { className: 'badge-flipkart', label: '🔵 Flipkart' },
+  vijaysales: { className: 'badge-vijaysales', label: '🔴 Vijay Sales' },
+};
+
 export default function AddProductModal({ userEmail, onClose, onAdded }) {
   const [form, setForm] = useState({ url: '', targetPrice: '' });
   const [loading, setLoading] = useState(false);
@@ -16,6 +22,7 @@ export default function AddProductModal({ userEmail, onClose, onAdded }) {
   const detectPlatform = (url) => {
     if (url.includes('amazon')) return 'amazon';
     if (url.includes('flipkart')) return 'flipkart';
+    if (url.includes('vijaysales')) return 'vijaysales';
     return null;
   };
 
@@ -26,7 +33,7 @@ export default function AddProductModal({ userEmail, onClose, onAdded }) {
     setError('');
 
     if (!form.url.trim()) return setError('Product URL is required');
-    if (!platform) return setError('Only Amazon (amazon.in) and Flipkart URLs are supported');
+    if (!platform) return setError('Only Amazon (amazon.in), Flipkart, and Vijay Sales URLs are supported');
     if (!form.targetPrice || isNaN(form.targetPrice) || parseFloat(form.targetPrice) <= 0) {
       return setError('Enter a valid target price');
     }
@@ -55,7 +62,7 @@ export default function AddProductModal({ userEmail, onClose, onAdded }) {
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Track a New Product</h2>
-            <p className="text-sm text-gray-500 mt-0.5">Supports Amazon India and Flipkart</p>
+            <p className="text-sm text-gray-500 mt-0.5">Supports Amazon India, Flipkart, and Vijay Sales</p>
           </div>
           <button
             onClick={onClose}
@@ -78,15 +85,15 @@ export default function AddProductModal({ userEmail, onClose, onAdded }) {
                 name="url"
                 value={form.url}
                 onChange={handleChange}
-                placeholder="https://www.amazon.in/dp/... or flipkart.com/..."
+                placeholder="https://www.amazon.in/dp/... or flipkart.com/... or vijaysales.com/p/..."
                 className="input pl-9"
                 disabled={loading}
               />
             </div>
             {platform && (
               <p className="text-xs mt-1.5">
-                <span className={platform === 'amazon' ? 'badge-amazon' : 'badge-flipkart'}>
-                  {platform === 'amazon' ? '🟠 Amazon' : '🔵 Flipkart'} detected
+                <span className={PLATFORM_BADGE[platform]?.className}>
+                  {PLATFORM_BADGE[platform]?.label} detected
                 </span>
               </p>
             )}
@@ -157,6 +164,13 @@ export default function AddProductModal({ userEmail, onClose, onAdded }) {
               className="block w-full text-left text-xs text-gray-500 hover:text-brand-500 truncate py-0.5 transition-colors"
             >
               Flipkart: https://www.flipkart.com/apple-iphone-15/...
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm((f) => ({ ...f, url: 'https://www.vijaysales.com/p/P253988/253985/apple-macbook-air-m5-chip-16gb-ram-512gb-ssd-13-inch-liquid-retina-display-10-core-cpu-and-8-core-gpu-midnight-mdhe4hn-a' }))}
+              className="block w-full text-left text-xs text-gray-500 hover:text-brand-500 truncate py-0.5 transition-colors"
+            >
+              Vijay Sales: https://www.vijaysales.com/p/P253988/...
             </button>
           </div>
         </div>
